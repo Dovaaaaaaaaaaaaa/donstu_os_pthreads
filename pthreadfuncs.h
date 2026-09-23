@@ -1,8 +1,18 @@
+#ifndef PTHREADFUNCS_H
+#define PTHREADFUNCS_H
+
 #include <stdio.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <pthread.h>
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+
 
 // count of threads
 #define COUNT_THREADS 4
@@ -19,18 +29,20 @@ struct ThreadArgs {
 
 
 // common resources - is a file for logging
-static int g_fd = -1;
+extern int g_fd;
 
-// mutex 
-static pthread_mutex_t g_lock = PTHREAD_MUTEX_INITIALIZER;
+// mutex
+extern pthread_mutex_t g_lock;
 
 // git ID of current thread
-static pid_t getThreadID(void);
+pid_t getThreadID(void);
 
 // write a string from thread with mutex
-static void write_line(const char *msg);
+void write_line(const char *msg);
 
 // pointer for thread's function
-static void *func_thread(void *arg);
+void *func_thread(void *arg);
 
 void about(void);
+
+#endif

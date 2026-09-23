@@ -3,13 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <fcntl.h>
-#include <pthread.h>
+#include <unistd.h>
 #include <sys/syscall.h>
-#include <sys/types.h>
-
-
 
 
 int main(void) {
@@ -27,42 +23,39 @@ int main(void) {
         return EXIT_FAILURE;
     }
 
-    printf("main: pid = %d, opened file: \'output.log\' (fd = %d)\n", getpid(), g_fd);
+    printf("main: pid = %d, opened file: \'output.log\' (fd = %d)\n", getThreadID(), g_fd);
 
     // create structs for threads
     args[0].id  = 1;
-    strcpy(args[0].tag, "First");
+    strcpy(args[0].tag, "First\0");
     args[1].id  = 2;
-    strcpy(args[1].tag, "Second");
+    strcpy(args[1].tag, "Second\0");
     args[2].id  = 3;
-    strcpy(args[2].tag, "Third");
+    strcpy(args[2].tag, "Third\0");
     args[3].id  = 4;
-    strcpy(args[3].tag, "Fourth");
+    strcpy(args[3].tag, "Fourth\0");
     
-
-    /* --- Создаём потоки --- */
+    // create threads
     for (int i = 0; i < COUNT_THREADS; i++) {
-
-
-        int rc = pthread_create(&threads[i], NULL, worker, &args[i]);
+        int rc = pthread_create(&threads[i], NULL, func_thread, &args[i]);
         if (rc != 0) {
             fprintf(stderr, "pthread_create: %s\n", strerror(rc));
             return EXIT_FAILURE;
         }
     }
 
-    /* --- Ждём завершения --- */
+    // wait stoping all thread
     for (int i = 0; i < COUNT_THREADS; i++) {
         pthread_join(threads[i], NULL);
     }
 
-    /* --- Системный вызов close() --- */
+    // sys call for close file
     if (close(g_fd) < 0) {
         perror("close");
         return EXIT_FAILURE;
     }
-
+    // remove mutex
     pthread_mutex_destroy(&g_lock);
-    printf("main: все потоки завершены, файл закрыт\n");
+    printf("main: all threads finished, file closed\n");
     return EXIT_SUCCESS;
 }
