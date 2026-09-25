@@ -2,3 +2,7 @@ app
 *.o
 output.log
 trace.log
+.vscode/
+broken.log
+producer_consumer
+pthread_equal_test

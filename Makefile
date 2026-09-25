@@ -1,13 +1,14 @@
 # Current compiler for work
-CC		= gcc
+CC		= clang
 # Flags for compiling
 # all warnings, additional warnings and 
 # debug information
-CFLAGS  = -Wall -Wextra -g
+CFLAGS  = -Wall -Wextra -g -pthread
 # Name of execution file (result of compilation)
 TARGET 	= app
 # list of object files for linking (result of compiling too)
 OBJS	= main.o pthreadfuncs.o
+OUTPUT = output.log
 
 # Rule for making
 # target: dependencies
@@ -32,7 +33,12 @@ $(TARGET): $(OBJS)
 
 # it's only actions
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(OBJS) $(TARGET) $(OUTPUT)
 
 # lay target
-.PHONY: clean
+
+run: $(TARGET)
+	./$(TARGET)
+log:
+	cat $(OUTPUT)
+.PHONY: clean run log

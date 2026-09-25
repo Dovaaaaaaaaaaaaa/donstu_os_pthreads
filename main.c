@@ -11,9 +11,9 @@
 int main(void) {
     // headline
     about();
+
     // array with threads
     pthread_t threads[COUNT_THREADS];
-    struct ThreadArgs args[COUNT_THREADS];
 
     // sys call - open
     // file, modes, rights
@@ -23,30 +23,52 @@ int main(void) {
         return EXIT_FAILURE;
     }
 
-    printf("main: pid = %d, opened file: \'output.log\' (fd = %d)\n", getThreadID(), g_fd);
+    // write headline to log
+    char buf[128];
+    snprintf(buf, sizeof(buf),
+             "main: pid = %d, opened file: 'output.log' (fd = %d)\n",
+             getpid(), g_fd);
+    if (write_line(buf) != 0) {
+        fprintf(stderr, "main: write_line failed\n");
+    }
 
-    // create structs for threads
-    args[0].id  = 1;
-    strcpy(args[0].tag, "First\0");
-    args[1].id  = 2;
-    strcpy(args[1].tag, "Second\0");
-    args[2].id  = 3;
-    strcpy(args[2].tag, "Third\0");
-    args[3].id  = 4;
-    strcpy(args[3].tag, "Fourth\0");
-    
-    // create threads
+    // create structs for threads via malloc
+    // (задание 26: detached-потоку нельзя передавать стек main)
     for (int i = 0; i < COUNT_THREADS; i++) {
-        int rc = pthread_create(&threads[i], NULL, func_thread, &args[i]);
+        struct ThreadArgs *arg = malloc(sizeof(struct ThreadArgs));
+        if (arg == NULL) {
+            perror("malloc");
+            close(g_fd);
+            return EXIT_FAILURE;
+        }
+
+        arg->id = i;
+        snprintf(arg->tag, sizeof(arg->tag), "T%d", i);
+        snprintf(arg->message, sizeof(arg->message),
+                 "hello from thread %d", i);
+
+        int rc = pthread_create(&threads[i], NULL, func_thread, arg);
         if (rc != 0) {
             fprintf(stderr, "pthread_create: %s\n", strerror(rc));
+            free(arg);
+            close(g_fd);
             return EXIT_FAILURE;
         }
     }
 
-    // wait stoping all thread
+    // wait stopping all threads
+    // (для detached-потоков join вернёт ошибку — это ожидаемо)
     for (int i = 0; i < COUNT_THREADS; i++) {
-        pthread_join(threads[i], NULL);
+        int rc = pthread_join(threads[i], NULL);
+        if (rc != 0) {
+            fprintf(stderr, "join thread %d failed: %s\n", i, strerror(rc));
+        }
+    }
+        printf("counter = %d (expected %d)\n",
+           counter, COUNT_THREADS * 100000);
+    // write final message to log WHILE file is still open
+    if (write_line("main: all threads finished, file closed\n") != 0) {
+        fprintf(stderr, "main: write_line failed\n");
     }
 
     // sys call for close file
@@ -54,8 +76,9 @@ int main(void) {
         perror("close");
         return EXIT_FAILURE;
     }
+
     // remove mutex
     pthread_mutex_destroy(&g_lock);
-    printf("main: all threads finished, file closed\n");
+
     return EXIT_SUCCESS;
 }

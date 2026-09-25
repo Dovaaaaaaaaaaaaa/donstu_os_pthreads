@@ -17,7 +17,7 @@
 // count of threads
 #define COUNT_THREADS 4
 // count of iterations
-#define COUNT_ITERATIONS 3
+#define COUNT_ITERATIONS 5
 
 // struct send to thread
 struct ThreadArgs {
@@ -25,6 +25,7 @@ struct ThreadArgs {
     int  id;
     // something string (with name of thread, f.e.)
     char tag[10];
+    char message[64];
 };
 
 
@@ -33,12 +34,12 @@ extern int g_fd;
 
 // mutex
 extern pthread_mutex_t g_lock;
-
+extern int counter;
 // git ID of current thread
 pid_t getThreadID(void);
 
 // write a string from thread with mutex
-void write_line(const char *msg);
+int write_line(const char *msg);
 
 // pointer for thread's function
 void *func_thread(void *arg);
